@@ -14,6 +14,7 @@
   <div id="landing-screen" class="screen active">
     <canvas id="lava-canvas"></canvas>
     <div id="flash-overlay"></div>
+    <div id="magma-flood"></div>
 
     <div class="landing-content">
       <h1 class="landing-title">Beef Gambling</h1>
@@ -25,53 +26,104 @@
   </div>
 
   <div id="lobby-screen" class="screen">
-    <div class="lobby-header">
-      <h2>Choose a Game</h2>
-    </div>
-    <div class="lobby-game-list">
-      <button class="lobby-game-card" data-game="mines">Mines</button>
-      <button class="lobby-game-card" data-game="plinko" disabled>Plinko (soon)</button>
-      <button class="lobby-game-card" data-game="dice" disabled>Dice (soon)</button>
-      <button class="lobby-game-card" data-game="plane" disabled>Plane (soon)</button>
-      <button class="lobby-game-card" data-game="crash" disabled>Crash (soon)</button>
-    </div>
-  </div>
+    <div class="dashboard">
 
-  <div id="mines-screen" class="screen">
-    <button class="back-to-lobby-btn" data-target="mines">← Back</button>
-
-    <div class="mines-layout">
-      <div class="mines-controls">
-        <label>
-          Grid Size
-          <select id="mines-grid-select"></select>
-        </label>
-        <label>
-          Mines
-          <select id="mines-mine-select"></select>
-        </label>
-        <label>
-          Bet Amount
-          <input id="mines-bet-input" type="number" value="10" min="1" />
-        </label>
-        <button id="mines-start-btn" class="mines-action-btn">Start Game</button>
-        <button id="mines-cashout-btn" class="mines-action-btn cashout">Cash Out</button>
-
-        <div class="mines-stats">
-          <div>Multiplier: <span id="mines-multiplier">1.00x</span></div>
-          <div>Payout: <span id="mines-payout">$0.00</span></div>
-        </div>
-        <div id="mines-status" class="mines-status-text"></div>
+      <div class="topbar">
+        <div class="topbar-brand">BEEF GAMBLING</div>
+        <div class="balance-pill">$<span id="balance-amount">1,000.00</span></div>
       </div>
 
-      <div id="mines-grid" class="mines-grid"></div>
+      <div class="wager-bar">
+        <label class="wager-label">Wager Amount ($)</label>
+        <div class="wager-input-row">
+          <input id="global-bet-input" type="number" value="10" min="1" />
+          <div class="wager-shortcuts">
+            <button data-action="min">Min</button>
+            <button data-action="half">½</button>
+            <button data-action="double">2x</button>
+            <button data-action="max">Max</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-bar">
+        <button class="tab-btn" data-tab="dice" disabled>Dice</button>
+        <button class="tab-btn active" data-tab="mines">Mines</button>
+        <button class="tab-btn" data-tab="plinko" disabled>Plinko</button>
+        <button class="tab-btn" data-tab="profile">Profile</button>
+      </div>
+
+      <div class="tab-content">
+
+        <div id="mines-tab" class="tab-panel active">
+          <div class="mines-layout">
+            <div class="mines-controls">
+              <label>
+                Grid Size
+                <select id="mines-grid-select"></select>
+              </label>
+              <label>
+                Mines
+                <select id="mines-mine-select"></select>
+              </label>
+              <button id="mines-start-btn" class="action-btn primary">Start Game</button>
+              <button id="mines-cashout-btn" class="action-btn cashout">Cash Out</button>
+              <div class="mines-stats">
+                <div>Multiplier: <span id="mines-multiplier">1.00x</span></div>
+                <div>Payout: <span id="mines-payout">$0.00</span></div>
+              </div>
+              <div id="mines-status" class="status-text"></div>
+            </div>
+            <div id="mines-grid" class="mines-grid"></div>
+          </div>
+        </div>
+
+        <div id="dice-tab" class="tab-panel">
+          <p class="coming-soon">Dice — coming soon</p>
+        </div>
+
+        <div id="plinko-tab" class="tab-panel">
+          <p class="coming-soon">Plinko — coming soon</p>
+        </div>
+
+        <div id="profile-tab" class="tab-panel">
+          <div class="profile-card">
+            <div class="profile-header">
+              <div class="profile-avatar">U</div>
+              <div>
+                <div class="profile-name">Player</div>
+                <div class="profile-badge">Bronze Novice</div>
+              </div>
+            </div>
+            <div class="profile-stats">
+              <div class="profile-stat">
+                <div class="stat-label">Total Wagered</div>
+                <div class="stat-value" id="profile-wagered">$0.00</div>
+              </div>
+              <div class="profile-stat">
+                <div class="stat-label">Total Wins</div>
+                <div class="stat-value win" id="profile-wins">$0.00</div>
+              </div>
+              <div class="profile-stat">
+                <div class="stat-label">Total Losses</div>
+                <div class="stat-value loss" id="profile-losses">$0.00</div>
+              </div>
+              <div class="profile-stat">
+                <div class="stat-label">Net Worth</div>
+                <div class="stat-value" id="profile-networth">$1,000.00</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
   <script src="js/landingAnimation.js"></script>
-  <script src="js/games/mines/minesGame.js"></script>
-  <script src="js/games/mines/minesRenderer.js"></script>
-  <script src="js/games/mines/minesUI.js"></script>
-  <script src="js/main.js"></script>
+<script src="js/games/mines/minesGame.js"></script>
+<script src="js/games/mines/minesRenderer.js"></script>
+<script src="js/games/mines/minesUI.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>

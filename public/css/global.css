@@ -23,5 +23,5 @@ html, body {
 }
 
 .screen.active {
-  display: block;
+  display: flex;
 }

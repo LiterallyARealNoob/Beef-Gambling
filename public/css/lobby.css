@@ -1,58 +1,271 @@
 #lobby-screen {
-  background: #0a0a0a;
+  background: #0a0d12;
+  overflow-y: auto;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100%;
+}
+
+.dashboard {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2rem;
-  padding: 2rem;
-}
-
-.lobby-header h2 {
-  font-size: 2rem;
-  color: #ffb380;
-}
-
-.lobby-game-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 1rem;
-  max-width: 700px;
-  width: 100%;
 }
 
-.lobby-game-card {
-  padding: 1.5rem 1rem;
+.topbar {
+  background: #131922;
+  border-radius: 14px;
+  padding: 1.1rem 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topbar-brand {
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #e8edf3;
+  font-size: 1rem;
+}
+
+.balance-pill {
+  background: #0d1f15;
+  color: #2ecc71;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  box-shadow: 0 0 14px rgba(46, 204, 113, 0.35);
+}
+
+.wager-bar {
+  background: #131922;
+  border-radius: 14px;
+  padding: 1rem 1.3rem;
+}
+
+.wager-label {
+  display: block;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  color: #7d8a9a;
+  margin-bottom: 0.6rem;
+  text-transform: uppercase;
+}
+
+.wager-input-row {
+  display: flex;
+  align-items: center;
+  background: #0a0d12;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.wager-input-row input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #fff;
   font-size: 1.1rem;
   font-weight: 700;
-  border: 2px solid #ff6b1a;
-  border-radius: 10px;
-  background: rgba(255, 107, 26, 0.08);
-  color: #ffb380;
+  padding: 0.8rem 1rem;
+}
+
+.wager-input-row input:focus {
+  outline: none;
+}
+
+.wager-shortcuts {
+  display: flex;
+}
+
+.wager-shortcuts button {
+  background: #1a2230;
+  color: #8a97a8;
+  border: none;
+  border-left: 1px solid #0a0d12;
+  padding: 0.8rem 0.7rem;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.lobby-game-card:hover:not(:disabled) {
-  background: #ff6b1a;
-  color: #1a0500;
-  transform: scale(1.05);
+.wager-shortcuts button:hover {
+  background: #232d3e;
+  color: #fff;
 }
 
-.lobby-game-card:disabled {
+.tab-bar {
+  background: #131922;
+  border-radius: 14px;
+  padding: 0.4rem;
+  display: flex;
+  gap: 0.3rem;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 0.7rem 0.5rem;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #7d8a9a;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tab-btn:hover:not(:disabled) {
+  color: #cfd8e3;
+}
+
+.tab-btn.active {
+  background: #1c2531;
+  color: #fff;
+  box-shadow: inset 0 -2px 0 #ff6b1a;
+}
+
+.tab-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
 
-.back-to-lobby-btn {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  padding: 0.5rem 1rem;
-  background: rgba(255, 107, 26, 0.15);
-  border: 1px solid #ff6b1a;
-  border-radius: 6px;
-  color: #ffb380;
+.tab-content {
+  background: #131922;
+  border-radius: 14px;
+  padding: 1.3rem;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.coming-soon {
+  text-align: center;
+  color: #5a6678;
+  padding: 2rem 0;
+  font-size: 0.95rem;
+}
+
+.action-btn {
+  padding: 0.8rem;
+  border-radius: 10px;
+  border: none;
+  font-weight: 700;
   cursor: pointer;
-  z-index: 10;
+  width: 100%;
+}
+
+.action-btn.primary {
+  background: #ff6b1a;
+  color: #1a0500;
+}
+
+.action-btn.primary:hover:not(:disabled) {
+  background: #ff8438;
+}
+
+.action-btn.cashout {
+  background: #2ecc71;
+  color: #06210f;
+}
+
+.action-btn.cashout:hover:not(:disabled) {
+  background: #45e08a;
+}
+
+.action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.status-text {
+  min-height: 1.2rem;
+  font-size: 0.85rem;
+  color: #aab6c4;
+  text-align: center;
+}
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2ecc71, #1abc9c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: #fff;
+}
+
+.profile-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.profile-badge {
+  display: inline-block;
+  margin-top: 0.3rem;
+  background: #1a2230;
+  color: #5dade2;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.profile-stat {
+  background: #0a0d12;
+  border-radius: 10px;
+  padding: 0.9rem;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #7d8a9a;
+  margin-bottom: 0.3rem;
+}
+
+.stat-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.stat-value.win {
+  color: #2ecc71;
+}
+
+.stat-value.loss {
+  color: #ff5050;
 }

@@ -9,7 +9,7 @@ const MinesUI = (() => {
 
     gridSelect = document.getElementById("mines-grid-select");
     mineSelect = document.getElementById("mines-mine-select");
-    betInput = document.getElementById("mines-bet-input");
+    betInput = document.getElementById("global-bet-input");
     startBtn = document.getElementById("mines-start-btn");
     cashOutBtn = document.getElementById("mines-cashout-btn");
 
@@ -54,7 +54,6 @@ const MinesUI = (() => {
   function setControlsEnabled(enabled) {
     gridSelect.disabled = !enabled;
     mineSelect.disabled = !enabled;
-    betInput.disabled = !enabled;
     startBtn.disabled = !enabled;
   }
 
