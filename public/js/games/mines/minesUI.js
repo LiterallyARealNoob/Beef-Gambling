@@ -6,7 +6,7 @@ const MinesUI = (() => {
 
     gridSelect  = document.getElementById("mines-grid-select");
     mineSelect  = document.getElementById("mines-mine-select");
-    betInput    = document.getElementById("global-bet-input");
+    betInput    = document.getElementById("mines-bet-input");
     startBtn    = document.getElementById("mines-start-btn");
     cashOutBtn  = document.getElementById("mines-cashout-btn");
 
@@ -18,8 +18,29 @@ const MinesUI = (() => {
     cashOutBtn.addEventListener("click", handleCashOut);
     MinesRenderer.setTileClickHandler(handleTileClick);
 
+    initWagerShortcuts();
+
     setControlsEnabled(true);
     cashOutBtn.disabled = true;
+  }
+
+  function initWagerShortcuts() {
+    document.querySelectorAll('.mines-wager .game-wager-shortcuts button').forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const current = parseFloat(betInput.value) || 0;
+        switch (btn.dataset.action) {
+          case "min":
+            betInput.value = 1;
+            break;
+          case "half":
+            betInput.value = Math.max(1, (current / 2)).toFixed(2);
+            break;
+          case "max":
+            betInput.value = BalanceManager.getBalance();
+            break;
+        }
+      });
+    });
   }
 
   function populateGridOptions() {

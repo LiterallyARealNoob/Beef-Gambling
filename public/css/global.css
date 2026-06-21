@@ -25,3 +25,60 @@ html, body {
 .screen.active {
   display: flex;
 }
+
+/* ── Game Wager Box (shared structure, themed per-game) ───── */
+.game-wager-box {
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.game-wager-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #7d8a9a;
+}
+
+.game-wager-row {
+  display: flex;
+  align-items: stretch;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.game-wager-row input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.7rem 0.9rem;
+  outline: none;
+}
+
+.game-wager-row input::-webkit-outer-spin-button,
+.game-wager-row input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.game-wager-shortcuts {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+}
+
+.game-wager-shortcuts button {
+  border: none;
+  background: transparent;
+  padding: 0 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}

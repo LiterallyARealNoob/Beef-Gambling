@@ -1,3 +1,21 @@
+/* ── Mines wager box theme: ember/tile, matches the grid ──── */
+.mines-wager {
+  background: #0d0500;
+  border: 1px solid #3a1a00;
+}
+.mines-wager .game-wager-label { color: #ffb380; }
+.mines-wager .game-wager-row { background: #1c1200; }
+.mines-wager .game-wager-row input { color: #ffb380; }
+.mines-wager .game-wager-shortcuts button {
+  background: #2a1a00;
+  color: #ffb380;
+  border-left: 1px solid #0d0500;
+}
+.mines-wager .game-wager-shortcuts button:hover {
+  background: #3a2400;
+  color: #fff;
+}
+
 /* ── Mines Layout ─────────────────────────────────────────── */
 .mines-layout {
   display: flex;
