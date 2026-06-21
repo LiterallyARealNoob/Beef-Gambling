@@ -3,6 +3,7 @@ const cors = require("cors");
 const path = require("path");
 const { PORT } = require("./config");
 const authRoutes = require("./routes/auth");
+const gamesRoutes = require("./routes/games");
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/games", gamesRoutes);
 
 app.listen(PORT, () => {
   console.log(`Beef Gambling server running on port ${PORT}`);
