@@ -1,11 +1,7 @@
-// Mines game — core game logic and API wiring (no visuals yet,
-// that's handled by minesRenderer.js and minesVFX.js)
-
 const MinesGame = (() => {
   const GRID_OPTIONS = {
-    "3x3": { size: 3, totalTiles: 9, mineOptions: [1, 2, 3] },
-    "5x5": { size: 5, totalTiles: 25, mineOptions: [1, 2, 3] },
-    "10x10": { size: 10, totalTiles: 100, mineOptions: [5, 10, 15] }
+    "3x3": { size: 3, totalTiles: 9,  mineOptions: [1, 2, 3] },
+    "5x5": { size: 5, totalTiles: 25, mineOptions: [1, 2, 3, 5, 10] }
   };
 
   let state = {
@@ -16,34 +12,21 @@ const MinesGame = (() => {
     totalTiles: 25,
     revealedTiles: [],
     currentMultiplier: 1,
-    status: "idle" // idle | active | busted | cashed_out
+    status: "idle"
   };
 
-  function getGridOptions() {
-    return GRID_OPTIONS;
-  }
-
-  function getState() {
-    return { ...state };
-  }
+  function getGridOptions() { return GRID_OPTIONS; }
+  function getState()       { return { ...state }; }
 
   async function startGame({ gridKey, mineCount, betAmount }) {
     const gridConfig = GRID_OPTIONS[gridKey];
     if (!gridConfig) throw new Error("Invalid grid size");
-    if (!gridConfig.mineOptions.includes(mineCount)) {
-      throw new Error("Invalid mine count for this grid size");
-    }
 
     const response = await fetch("/api/games/mines/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        totalTiles: gridConfig.totalTiles,
-        mines: mineCount,
-        betAmount
-      })
+      body: JSON.stringify({ totalTiles: gridConfig.totalTiles, mines: mineCount, betAmount })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to start game");
 
@@ -58,6 +41,8 @@ const MinesGame = (() => {
       status: "active"
     };
 
+    // deduct bet from displayed balance immediately
+    BalanceManager.deduct(betAmount);
     return state;
   }
 
@@ -69,18 +54,15 @@ const MinesGame = (() => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId: state.sessionId, tileIndex })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to reveal tile");
-
-    state.revealedTiles.push(tileIndex);
 
     if (data.hitMine) {
       state.status = "busted";
     } else {
+      state.revealedTiles.push(tileIndex);
       state.currentMultiplier = data.multiplier;
     }
-
     return data;
   }
 
@@ -92,33 +74,29 @@ const MinesGame = (() => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId: state.sessionId })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to cash out");
 
     state.status = "cashed_out";
+    // add winnings to balance
+    BalanceManager.add(data.payout);
+    BalanceManager.recordWin(data.payout, state.betAmount);
     return data;
+  }
+
+  function recordLoss() {
+    BalanceManager.recordLoss(state.betAmount);
   }
 
   function resetState() {
     state = {
+      ...state,
       sessionId: null,
-      gridKey: state.gridKey,
-      mineCount: state.mineCount,
-      betAmount: state.betAmount,
-      totalTiles: state.totalTiles,
       revealedTiles: [],
       currentMultiplier: 1,
       status: "idle"
     };
   }
 
-  return {
-    getGridOptions,
-    getState,
-    startGame,
-    revealTile,
-    cashOut,
-    resetState
-  };
+  return { getGridOptions, getState, startGame, revealTile, cashOut, recordLoss, resetState };
 })();

@@ -1,3 +1,4 @@
+/* ── Mines Layout ─────────────────────────────────────────── */
 .mines-layout {
   display: flex;
   flex-direction: column;
@@ -23,56 +24,232 @@
 .mines-controls select {
   padding: 0.7rem;
   border-radius: 10px;
-  border: none;
+  border: 1px solid #2a1a00;
   background: #0a0d12;
-  color: #fff;
+  color: #ffb380;
   font-size: 0.95rem;
 }
 
+/* ── Stats Bar ────────────────────────────────────────────── */
 .mines-stats {
   display: flex;
   justify-content: space-between;
-  background: #0a0d12;
+  background: #0d0500;
+  border: 1px solid #3a1a00;
   border-radius: 10px;
   padding: 0.7rem 1rem;
   font-size: 0.9rem;
-  color: #cfd8e3;
+  color: #ffb380;
 }
 
+/* ── Grid ─────────────────────────────────────────────────── */
 .mines-grid {
   display: grid;
   gap: 8px;
   width: 100%;
 }
 
+/* ── Base Tile ────────────────────────────────────────────── */
 .mine-tile {
   aspect-ratio: 1;
   border: none;
-  border-radius: 8px;
-  background: #1c2531;
-  box-shadow: inset 0 -3px 0 rgba(0,0,0,0.3);
+  border-radius: 10px;
+  background: linear-gradient(145deg, #1c1200, #0d0800);
+  box-shadow:
+    inset 0 -3px 0 rgba(0,0,0,0.5),
+    0 0 0 1px #3a2000;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
+}
+
+.mine-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(255,120,0,0.08), transparent 70%);
+  border-radius: inherit;
 }
 
 .mine-tile:hover:not(:disabled) {
-  background: #232d3e;
-  transform: scale(1.04);
+  transform: scale(1.06);
+  box-shadow:
+    inset 0 -3px 0 rgba(0,0,0,0.5),
+    0 0 12px rgba(255,100,0,0.4),
+    0 0 0 1px #ff6b1a;
 }
 
+.mine-tile:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+/* ── Crack Overlays (warn player as they reveal more) ─────── */
+.mine-tile .crack {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: inherit;
+}
+
+.mine-tile .crack-1 {
+  background-image:
+    linear-gradient(45deg, transparent 48%, rgba(255,80,0,0.25) 49%, rgba(255,80,0,0.25) 51%, transparent 52%),
+    linear-gradient(-30deg, transparent 60%, rgba(255,80,0,0.15) 61%, rgba(255,80,0,0.15) 63%, transparent 64%);
+}
+
+.mine-tile .crack-2 {
+  background-image:
+    linear-gradient(45deg, transparent 48%, rgba(255,50,0,0.4) 49%, rgba(255,50,0,0.4) 51%, transparent 52%),
+    linear-gradient(-30deg, transparent 45%, rgba(255,50,0,0.3) 46%, rgba(255,50,0,0.3) 48%, transparent 49%),
+    linear-gradient(80deg, transparent 55%, rgba(255,100,0,0.2) 56%, rgba(255,100,0,0.2) 58%, transparent 59%);
+}
+
+.mine-tile .crack-3 {
+  background-image:
+    linear-gradient(45deg, transparent 30%, rgba(255,30,0,0.6) 31%, rgba(255,30,0,0.6) 33%, transparent 34%),
+    linear-gradient(-30deg, transparent 30%, rgba(255,30,0,0.5) 31%, rgba(255,30,0,0.5) 33%, transparent 34%),
+    linear-gradient(80deg, transparent 40%, rgba(255,80,0,0.4) 41%, rgba(255,80,0,0.4) 43%, transparent 44%),
+    linear-gradient(10deg, transparent 50%, rgba(255,60,0,0.3) 51%, rgba(255,60,0,0.3) 53%, transparent 54%);
+  box-shadow: inset 0 0 12px rgba(255,30,0,0.3);
+}
+
+/* crack levels shown on unrevealed tiles based on danger */
+.mine-tile.danger-low .crack-1   { opacity: 1; }
+.mine-tile.danger-mid .crack-1,
+.mine-tile.danger-mid .crack-2   { opacity: 1; }
+.mine-tile.danger-high .crack-1,
+.mine-tile.danger-high .crack-2,
+.mine-tile.danger-high .crack-3  { opacity: 1; }
+
+/* ── Safe Reveal ──────────────────────────────────────────── */
 .mine-tile.revealed-safe {
-  background: #ff6b1a;
-  box-shadow: inset 0 -3px 0 rgba(0,0,0,0.25), 0 0 14px rgba(255,107,26,0.5);
+  background: linear-gradient(145deg, #7a2e00, #ff6b1a);
+  box-shadow:
+    inset 0 -3px 0 rgba(0,0,0,0.3),
+    0 0 18px rgba(255,107,26,0.6),
+    0 0 0 1px #ff8438;
   cursor: default;
+  animation: safeReveal 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
 }
 
+.mine-tile.revealed-safe::after {
+  content: "🔥";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(0.8rem, 3vw, 1.4rem);
+  animation: iconPop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+@keyframes safeReveal {
+  0%   { transform: scale(0.7) rotateY(90deg); opacity: 0.5; }
+  100% { transform: scale(1) rotateY(0deg);    opacity: 1; }
+}
+
+@keyframes iconPop {
+  0%   { transform: translate(-50%,-50%) scale(0); opacity: 0; }
+  60%  { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
+  100% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+}
+
+/* ── Mine Hit ─────────────────────────────────────────────── */
 .mine-tile.revealed-mine {
-  background: #2a0a0a;
-  box-shadow: inset 0 0 0 2px #ff3b30;
+  background: linear-gradient(145deg, #1a0000, #2a0000);
+  box-shadow:
+    inset 0 0 0 2px #ff3b30,
+    0 0 8px rgba(255,59,48,0.3);
   cursor: default;
+  animation: mineReveal 0.3s ease forwards;
+}
+
+.mine-tile.revealed-mine::after {
+  content: "💣";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(0.8rem, 3vw, 1.4rem);
 }
 
 .mine-tile.mine-triggered {
-  background: #ff3b30;
-  box-shadow: 0 0 20px rgba(255,59,48,0.7);
+  background: radial-gradient(circle, #ff6b00, #ff0000, #1a0000);
+  box-shadow:
+    0 0 30px rgba(255,59,48,0.9),
+    0 0 60px rgba(255,100,0,0.5),
+    inset 0 0 20px rgba(255,0,0,0.5);
+  animation: mineExplode 0.5s ease forwards;
 }
+
+.mine-tile.mine-triggered::after {
+  content: "💥";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: clamp(1rem, 4vw, 1.8rem);
+  animation: explodeIcon 0.5s ease forwards;
+}
+
+@keyframes mineReveal {
+  0%   { transform: scale(1.2); opacity: 0; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes mineExplode {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.35); }
+  60%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+@keyframes explodeIcon {
+  0%   { transform: translate(-50%,-50%) scale(0) rotate(-20deg); opacity: 0; }
+  50%  { transform: translate(-50%,-50%) scale(1.5) rotate(10deg); opacity: 1; }
+  100% { transform: translate(-50%,-50%) scale(1) rotate(0deg);   opacity: 1; }
+}
+
+/* ── Screen shake on mine hit ─────────────────────────────── */
+.mines-grid.shake {
+  animation: gridShake 0.45s ease;
+}
+
+@keyframes gridShake {
+  0%,100% { transform: translateX(0); }
+  15%      { transform: translateX(-8px); }
+  30%      { transform: translateX(8px); }
+  45%      { transform: translateX(-6px); }
+  60%      { transform: translateX(6px); }
+  75%      { transform: translateX(-3px); }
+  90%      { transform: translateX(3px); }
+}
+
+/* ── Lava particle burst (injected by JS) ─────────────────── */
+.lava-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99;
+  animation: particleFly var(--dur, 0.6s) ease-out forwards;
+}
+
+@keyframes particleFly {
+  0%   { transform: translate(0,0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+}
+
+/* ── Status text ──────────────────────────────────────────── */
+.status-text {
+  min-height: 1.2rem;
+  font-size: 0.85rem;
+  color: #ffb380;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.status-text.win  { color: #2ecc71; }
+.status-text.loss { color: #ff3b30; }
