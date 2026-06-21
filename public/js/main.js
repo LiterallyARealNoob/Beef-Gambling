@@ -53,8 +53,8 @@ const LavaTransition = (() => {
   let phase = "idle";
   let cracks = [];
   let drips  = [];
-  let lavaY  = null; // top of lava pool rising
-  let dropY  = null; // lava dropping down to reveal lobby
+  let lavaY  = null;
+  let dropY  = null;
   let onDone = null;
 
   function init() {
@@ -83,14 +83,13 @@ const LavaTransition = (() => {
   function W() { return canvas.width; }
   function H() { return canvas.height; }
 
-  // ── Generate cracks radiating from center ──────────────────
   function generateCracks() {
     cracks = [];
     const cx = W() / 2, cy = H() / 2;
     const count = 10 + Math.floor(Math.random() * 6);
     for (let i = 0; i < count; i++) {
       const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.5;
-      const len   = 0.55 + Math.random() * 0.5; // fraction of screen diagonal
+      const len   = 0.55 + Math.random() * 0.5;
       const diag  = Math.sqrt(W()*W() + H()*H()) * 0.5;
       const pts   = [{ x: cx, y: cy }];
       let   px = cx, py = cy;
@@ -101,7 +100,6 @@ const LavaTransition = (() => {
         px = cx + Math.cos(angle) * diag * len * frac + Math.cos(angle + Math.PI/2) * jitter;
         py = cy + Math.sin(angle) * diag * len * frac + Math.sin(angle + Math.PI/2) * jitter;
         pts.push({ x: px, y: py });
-        // branch
         if (Math.random() < 0.45) {
           const bAngle = angle + (Math.random() - 0.5) * 1.2;
           const bLen   = diag * len * (0.2 + Math.random() * 0.25);
@@ -120,7 +118,6 @@ const LavaTransition = (() => {
     }
   }
 
-  // ── Spawn lava drip from a crack point ────────────────────
   function spawnDrip(x, y) {
     drips.push({
       x: x + (Math.random()-0.5)*10,
@@ -134,12 +131,10 @@ const LavaTransition = (() => {
     });
   }
 
-  // ── Draw teardrop drip ─────────────────────────────────────
   function drawDrip(d) {
     const g = Math.floor(60 + d.heat * 140);
     const col = `rgba(255,${g},0,${d.life})`;
 
-    // trail
     d.trail.forEach((pt, i) => {
       const a = (i / d.trail.length) * 0.35 * d.life;
       ctx.beginPath();
@@ -148,7 +143,6 @@ const LavaTransition = (() => {
       ctx.fill();
     });
 
-    // glow
     const grd = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, d.r*3);
     grd.addColorStop(0, `rgba(255,${g},0,${d.life*0.4})`);
     grd.addColorStop(1, "rgba(255,40,0,0)");
@@ -157,7 +151,6 @@ const LavaTransition = (() => {
     ctx.arc(d.x, d.y, d.r*3, 0, Math.PI*2);
     ctx.fill();
 
-    // teardrop
     ctx.beginPath();
     ctx.moveTo(d.x, d.y - d.r*1.5);
     ctx.bezierCurveTo(d.x+d.r*1.1, d.y-d.r*0.3, d.x+d.r, d.y+d.r*0.9, d.x, d.y+d.r*1.5);
@@ -165,16 +158,13 @@ const LavaTransition = (() => {
     ctx.fillStyle = col;
     ctx.fill();
 
-    // bright core
     ctx.beginPath();
     ctx.arc(d.x, d.y-d.r*0.2, d.r*0.4, 0, Math.PI*2);
     ctx.fillStyle = `rgba(255,220,80,${d.life*0.7})`;
     ctx.fill();
   }
 
-  // ── Draw lava fill ─────────────────────────────────────────
   function drawLavaFill(topY) {
-    // wavy surface
     ctx.beginPath();
     ctx.moveTo(0, H());
     ctx.lineTo(0, topY);
@@ -194,7 +184,6 @@ const LavaTransition = (() => {
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // surface glow
     ctx.beginPath();
     for (let x = 0; x <= W(); x += 6) {
       const wave = Math.sin(x / W() * Math.PI * 5 + t * 0.07) * 12
@@ -206,14 +195,11 @@ const LavaTransition = (() => {
     ctx.stroke();
   }
 
-  // ── Main render loop ───────────────────────────────────────
   function loop() {
     t++;
     ctx.clearRect(0, 0, W(), H());
 
-    // ── Phase 1: crack screen ──────────────────────────────
     if (phase === "cracking") {
-      // dark overlay so landing is obscured slightly
       ctx.fillStyle = "rgba(0,0,0,0.15)";
       ctx.fillRect(0, 0, W(), H());
 
@@ -228,7 +214,6 @@ const LavaTransition = (() => {
         const end = Math.floor(c.progress * (c.pts.length - 1));
         if (end < 1) return;
 
-        // glow under crack
         ctx.shadowBlur = 18;
         ctx.shadowColor = `rgba(255,80,0,${c.glow})`;
         ctx.beginPath();
@@ -239,7 +224,6 @@ const LavaTransition = (() => {
         ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // crack line
         ctx.beginPath();
         ctx.moveTo(c.pts[0].x, c.pts[0].y);
         for (let i = 1; i <= end; i++) ctx.lineTo(c.pts[i].x, c.pts[i].y);
@@ -247,14 +231,12 @@ const LavaTransition = (() => {
         ctx.lineWidth = c.width;
         ctx.stroke();
 
-        // spawn drips from crack tips randomly
         if (c.progress > 0.3 && Math.random() < 0.06) {
           const tip = c.pts[end];
           spawnDrip(tip.x, tip.y);
         }
       });
 
-      // draw drips
       drips.forEach(d => {
         d.trail.push({ x: d.x, y: d.y });
         if (d.trail.length > 10) d.trail.shift();
@@ -271,9 +253,7 @@ const LavaTransition = (() => {
       }
     }
 
-    // ── Phase 2: lava fills from bottom ───────────────────
     if (phase === "filling") {
-      // keep cracks visible
       cracks.forEach(c => {
         ctx.shadowBlur = 14;
         ctx.shadowColor = `rgba(255,80,0,${0.5 + Math.sin(t*0.1)*0.3})`;
@@ -289,7 +269,6 @@ const LavaTransition = (() => {
       lavaY -= 28;
       drawLavaFill(lavaY);
 
-      // drips still falling into lava
       drips.forEach(d => {
         d.trail.push({ x: d.x, y: d.y });
         if (d.trail.length > 10) d.trail.shift();
@@ -298,7 +277,6 @@ const LavaTransition = (() => {
       });
       drips = drips.filter(d => d.y < lavaY + 20);
 
-      // spawn more drips from cracks as lava rises
       if (Math.random() < 0.3) {
         const c = cracks[Math.floor(Math.random() * cracks.length)];
         if (c) {
@@ -310,19 +288,15 @@ const LavaTransition = (() => {
       if (lavaY <= 0) {
         phase  = "dropping";
         dropY  = 0;
-        // show lobby underneath before drop
-        if (onDone) onDone(); // swap screens now so lobby is behind
+        if (onDone) onDone();
       }
     }
 
-    // ── Phase 3: lava drops down revealing lobby ───────────
     if (phase === "dropping") {
-      // ease out — slow down as it falls
       const speed = 20 + dropY * 0.08;
       dropY += speed;
 
       if (dropY < H()) {
-        // draw lava as a rectangle dropping downward
         const topY = dropY;
         ctx.beginPath();
         ctx.moveTo(0, topY);
@@ -343,7 +317,6 @@ const LavaTransition = (() => {
         ctx.fillStyle = grad;
         ctx.fill();
 
-        // surface line
         ctx.beginPath();
         for (let x = 0; x <= W(); x += 6) {
           const wave = Math.sin(x / W() * Math.PI * 5 + t * 0.07) * 10
@@ -354,7 +327,6 @@ const LavaTransition = (() => {
         ctx.lineWidth = 3;
         ctx.stroke();
       } else {
-        // all done
         phase = "idle";
         canvas.style.display = "none";
         cancelAnimationFrame(animId);
@@ -398,6 +370,16 @@ document.addEventListener("DOMContentLoaded", () => {
       LavaTransition.play(() => {
         landingScreen.classList.remove("active");
         lobbyScreen.classList.add("active");
+
+        // Landing screen is now hidden behind the lobby. Give the
+        // lava-drop animation 3 seconds to fully clear, then kill
+        // the ambient volcano canvas loop and remove the landing
+        // screen from the DOM entirely so nothing keeps rendering
+        // behind the scenes.
+        setTimeout(() => {
+          LavaAnimation.destroy();
+          landingScreen.remove();
+        }, 3000);
       });
     }, 350);
   });

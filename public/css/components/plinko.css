@@ -1,0 +1,175 @@
+/* ── Plinko wager box theme: molten lava, matches the board ─ */
+.plinko-wager {
+  background: #150700;
+  border: 1px solid #4a1f00;
+}
+.plinko-wager .game-wager-label { color: #ff8a3d; }
+.plinko-wager .game-wager-row { background: #220d00; }
+.plinko-wager .game-wager-row input { color: #ffcb8a; }
+.plinko-wager .game-wager-shortcuts button {
+  background: #2e1300;
+  color: #ff8a3d;
+  border-left: 1px solid #150700;
+}
+.plinko-wager .game-wager-shortcuts button:hover {
+  background: #3d1a00;
+  color: #fff;
+}
+
+/* ── Layout ──────────────────────────────────────────────── */
+.plinko-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.plinko-board-area {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.plinko-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.plinko-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: #7d8a9a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.plinko-controls select {
+  padding: 0.7rem;
+  border-radius: 10px;
+  border: 1px solid #4a1f00;
+  background: #150700;
+  color: #ffcb8a;
+  font-size: 0.95rem;
+}
+
+.plinko-stats {
+  display: flex;
+  justify-content: space-between;
+  background: #150700;
+  border: 1px solid #4a1f00;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
+  color: #ffcb8a;
+}
+
+#plinko-canvas {
+  width: 100%;
+  height: 380px;
+  border-radius: 14px;
+  display: block;
+}
+
+/* ── Side panels ─────────────────────────────────────────── */
+.plinko-sidepanels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.plinko-panel {
+  background: #0d0500;
+  border: 1px solid #3a1a00;
+  border-radius: 12px;
+  padding: 0.9rem;
+}
+
+.plinko-panel-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #7d8a9a;
+  margin-bottom: 0.6rem;
+}
+
+/* Big win card */
+.plinko-bigwin-card .bigwin-placeholder {
+  color: #5a6678;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.bigwin-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ffb380;
+  text-align: center;
+}
+
+.bigwin-mult {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #ff6b1a;
+  text-align: center;
+  text-shadow: 0 0 20px rgba(255,107,26,0.6);
+}
+
+.bigwin-mult.gold {
+  color: #ffd34d;
+  text-shadow: 0 0 25px rgba(255,211,77,0.8);
+}
+
+.bigwin-payout {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2ecc71;
+  text-align: center;
+}
+
+.bigwin-time {
+  font-size: 0.7rem;
+  color: #5a6678;
+  text-align: center;
+  margin-top: 0.3rem;
+}
+
+/* Recent drops feed — scrollable list, newest on top */
+.plinko-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.plinko-history-entry {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.45rem 0.7rem;
+  border-radius: 8px;
+  background: #1a0d05;
+  font-size: 0.82rem;
+  font-weight: 600;
+  animation: historySlideIn 0.25s ease;
+}
+
+.plinko-history-entry.win .history-mult { color: #2ecc71; }
+.plinko-history-entry.loss .history-mult { color: #ff5050; }
+.history-payout { color: #aab6c4; }
+
+@keyframes historySlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Screen shake on big win ─────────────────────────────── */
+@keyframes plinkoShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(calc(var(--shake-intensity, 6px) * -1)); }
+  40% { transform: translateX(var(--shake-intensity, 6px)); }
+  60% { transform: translateX(calc(var(--shake-intensity, 6px) * -0.6)); }
+  80% { transform: translateX(calc(var(--shake-intensity, 6px) * 0.6)); }
+}
