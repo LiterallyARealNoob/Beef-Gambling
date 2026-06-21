@@ -1,125 +1,137 @@
 const PlinkoUI = (() => {
-  let rowSelect, betInput, dropBtn, multiplierEl, payoutEl, statusEl, historyList, bigwinPanel;
-  let dropsInFlight = 0;
+  let dropBtn, betInput, riskSelect, rowSelect;
+  let multEl, payoutEl, statusEl, autoBtn;
+  let autoActive   = false;
+  let autoInterval = null;
+  let pendingDrops = 0;
+  const MAX_BALLS  = 12;
 
   function init() {
     PlinkoRenderer.init();
 
-    rowSelect    = document.getElementById("plinko-risk-select");
-    betInput     = document.getElementById("plinko-bet-input");
-    dropBtn      = document.getElementById("plinko-drop-btn");
-    multiplierEl = document.getElementById("plinko-multiplier");
-    payoutEl     = document.getElementById("plinko-payout");
-    statusEl     = document.getElementById("plinko-status");
-    historyList  = document.getElementById("plinko-history-list");
-    bigwinPanel  = document.getElementById("plinko-bigwin-panel");
+    dropBtn    = document.getElementById("plinko-drop-btn");
+    betInput   = document.getElementById("plinko-bet-input");
+    riskSelect = document.getElementById("plinko-risk-select");
+    rowSelect  = document.getElementById("plinko-row-select");
+    multEl     = document.getElementById("plinko-multiplier");
+    payoutEl   = document.getElementById("plinko-payout");
+    statusEl   = document.getElementById("plinko-status");
+    autoBtn    = document.getElementById("plinko-auto-btn");
 
-    populateRowOptions();
-    rowSelect.addEventListener("change", () => {
-      PlinkoRenderer.setRows(parseInt(rowSelect.value, 10));
+    // populate risk
+    PlinkoGame.getRiskOptions().forEach(r => {
+      const opt = document.createElement("option");
+      opt.value = r;
+      opt.textContent = r.charAt(0).toUpperCase() + r.slice(1);
+      if (r === "high") opt.selected = true;
+      riskSelect.appendChild(opt);
     });
 
-    dropBtn.addEventListener("click", handleDrop);
-    initWagerShortcuts();
-
-    PlinkoRenderer.setRows(parseInt(rowSelect.value, 10));
-  }
-
-  function populateRowOptions() {
-    const options = PlinkoGame.getRowOptions(); // [8, 12, 16]
-    rowSelect.innerHTML = "";
-    options.forEach(rows => {
+    // populate rows
+    PlinkoGame.getRowOptions().forEach(r => {
       const opt = document.createElement("option");
-      opt.value = rows;
-      opt.textContent = `${rows} Rows`;
-      if (rows === 12) opt.selected = true;
+      opt.value = r;
+      opt.textContent = `${r} Rows`;
+      if (r === 16) opt.selected = true;
       rowSelect.appendChild(opt);
     });
-  }
 
-  function initWagerShortcuts() {
-    document.querySelectorAll('.plinko-wager .game-wager-shortcuts button').forEach((btn) => {
+    riskSelect.addEventListener("change", updateBoard);
+    rowSelect.addEventListener("change",  updateBoard);
+    dropBtn.addEventListener("click", () => dropBall());
+    if (autoBtn) autoBtn.addEventListener("click", toggleAuto);
+
+    // spacebar to drop
+    document.addEventListener("keydown", e => {
+      if (e.code === "Space" && document.getElementById("plinko-tab").classList.contains("active")) {
+        e.preventDefault();
+        dropBall();
+      }
+    });
+
+    // wager shortcuts
+    document.querySelectorAll(".game-wager-shortcuts button[data-target='plinko']").forEach(btn => {
       btn.addEventListener("click", () => {
-        const current = parseFloat(betInput.value) || 0;
+        const cur = parseFloat(betInput.value) || 0;
         switch (btn.dataset.action) {
-          case "min":
-            betInput.value = 1;
-            break;
-          case "half":
-            betInput.value = Math.max(1, current / 2).toFixed(2);
-            break;
-          case "max":
-            betInput.value = BalanceManager.getBalance();
-            break;
+          case "min":    betInput.value = 1; break;
+          case "half":   betInput.value = Math.max(1, cur / 2).toFixed(2); break;
+          case "double": betInput.value = Math.min(cur * 2, BalanceManager.getBalance()).toFixed(2); break;
+          case "max":    betInput.value = BalanceManager.getBalance(); break;
         }
       });
     });
+
+    // board gets set when tab is clicked — see main.js
   }
 
-  // Drop balls as fast as you click — no cooldown, no single-ball lock.
-  // Row count still can't change mid-air since the peg layout for a given
-  // row count is shared by the renderer, so we lock the rows dropdown only
-  // while at least one ball is in flight, not the drop button itself.
-  async function handleDrop() {
-    const rows      = parseInt(rowSelect.value, 10);
+  function updateBoard() {
+    const rows = parseInt(rowSelect.value);
+    const risk = riskSelect.value;
+    PlinkoRenderer.setBoard(rows, risk);
+  }
+
+  async function dropBall() {
+    const rows      = parseInt(rowSelect.value);
+    const risk      = riskSelect.value;
     const betAmount = parseFloat(betInput.value);
 
+    if (!betAmount || betAmount <= 0)            { setStatus("Enter a valid bet amount", "loss"); return; }
+    if (betAmount > BalanceManager.getBalance()) { setStatus("Insufficient balance!", "loss");    return; }
+    if (pendingDrops >= MAX_BALLS)               return;
+
+    pendingDrops++;
+
     try {
-      dropsInFlight++;
-      rowSelect.disabled = true;
+      const result = await PlinkoGame.drop({ risk, rows, betAmount });
 
-      const result = await PlinkoGame.drop({ rows, betAmount });
+      PlinkoRenderer.animateDrop(rows, risk, result.bucket, () => {
+        pendingDrops--;
+        multEl.textContent   = `${result.multiplier}x`;
+        payoutEl.textContent = `$${result.payout.toFixed(2)}`;
 
-      PlinkoRenderer.animateDrop(result.path, result.bucket, () => {
-        finishDrop(result);
+        const isWin = result.multiplier >= 1;
+        setStatus(
+          isWin
+            ? `🔥 ${result.multiplier}x — Won $${result.payout.toFixed(2)}!`
+            : `💀 ${result.multiplier}x — Lost`,
+          isWin ? "win" : "loss"
+        );
+
+        PlinkoVFX.addHistory(result.multiplier, result.payout, result.betAmount);
+        if (result.multiplier >= 10) PlinkoVFX.flash(result.multiplier);
       });
+
     } catch (err) {
-      statusEl.textContent = err.message;
-      statusEl.className = "status-text loss";
-      dropsInFlight = Math.max(0, dropsInFlight - 1);
-      if (dropsInFlight === 0) rowSelect.disabled = false;
+      pendingDrops--;
+      setStatus(err.message, "loss");
     }
   }
 
-  function finishDrop(result) {
-    const won = result.multiplier >= 1;
-
-    multiplierEl.textContent = `${result.multiplier}x`;
-    payoutEl.textContent = `$${result.payout.toFixed(2)}`;
-
-    statusEl.textContent = won
-      ? `🔥 Landed ${result.multiplier}x — won $${result.payout.toFixed(2)}!`
-      : `Landed ${result.multiplier}x — better luck next drop.`;
-    statusEl.className = `status-text ${won ? "win" : "loss"}`;
-
-    addHistoryEntry(result);
-    if (result.multiplier >= 10) updateBigWin(result);
-
-    dropsInFlight = Math.max(0, dropsInFlight - 1);
-    if (dropsInFlight === 0) rowSelect.disabled = false;
-  }
-
-  function addHistoryEntry(result) {
-    const won = result.multiplier >= 1;
-    const entry = document.createElement("div");
-    entry.className = `plinko-history-entry ${won ? "win" : "loss"}`;
-    entry.innerHTML = `
-      <span class="history-mult">${result.multiplier}x</span>
-      <span class="history-payout">$${result.payout.toFixed(2)}</span>
-    `;
-    historyList.prepend(entry);
-    while (historyList.children.length > 12) {
-      historyList.removeChild(historyList.lastChild);
+  function toggleAuto() {
+    autoActive = !autoActive;
+    if (autoActive) {
+      autoBtn.textContent = "Stop Auto";
+      autoBtn.classList.add("active");
+      autoInterval = setInterval(() => {
+        if (BalanceManager.getBalance() >= parseFloat(betInput.value)) {
+          dropBall();
+        } else {
+          toggleAuto();
+          setStatus("Out of balance — auto stopped", "loss");
+        }
+      }, 300);
+    } else {
+      autoBtn.textContent = "Auto Bet";
+      autoBtn.classList.remove("active");
+      clearInterval(autoInterval);
+      autoInterval = null;
     }
   }
 
-  function updateBigWin(result) {
-    bigwinPanel.innerHTML = `
-      <div class="bigwin-label">${result.rows} Rows</div>
-      <div class="bigwin-mult ${result.multiplier >= 100 ? 'gold' : ''}">${result.multiplier}x</div>
-      <div class="bigwin-payout">$${result.payout.toFixed(2)}</div>
-      <div class="bigwin-time">${new Date().toLocaleTimeString()}</div>
-    `;
+  function setStatus(text, type) {
+    statusEl.textContent = text;
+    statusEl.className   = "status-text " + type;
   }
 
   return { init };

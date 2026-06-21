@@ -14,7 +14,6 @@
 
   <div id="landing-screen" class="screen active">
     <canvas id="lava-canvas"></canvas>
-    <div id="flash-overlay"></div>
     <div class="landing-content">
       <h1 class="landing-title" data-text="BEEF GAMBLING">Beef Gambling</h1>
       <div class="landing-buttons">
@@ -41,16 +40,18 @@
 
       <div class="tab-content">
 
+        <!-- ── Mines ─────────────────────────────────────── -->
         <div id="mines-tab" class="tab-panel active">
           <div class="mines-layout">
             <div class="mines-controls">
-              <div class="game-wager-box mines-wager">
+              <div class="game-wager-box">
                 <label class="game-wager-label">Bet Amount</label>
                 <div class="game-wager-row">
                   <input id="mines-bet-input" type="number" value="10" min="1" />
                   <div class="game-wager-shortcuts">
                     <button data-target="mines" data-action="min">Min</button>
                     <button data-target="mines" data-action="half">½</button>
+                    <button data-target="mines" data-action="double">2x</button>
                     <button data-target="mines" data-action="max">Max</button>
                   </div>
                 </div>
@@ -75,46 +76,60 @@
           </div>
         </div>
 
+        <!-- ── Dice ──────────────────────────────────────── -->
         <div id="dice-tab" class="tab-panel">
           <p class="coming-soon">Dice — coming soon</p>
         </div>
 
+        <!-- ── Plinko ─────────────────────────────────────── -->
         <div id="plinko-tab" class="tab-panel">
           <div class="plinko-layout">
 
-            <div class="plinko-board-area">
-              <div class="plinko-controls">
-                <div class="game-wager-box plinko-wager">
-                  <label class="game-wager-label">Bet Amount</label>
-                  <div class="game-wager-row">
-                    <input id="plinko-bet-input" type="number" value="10" min="1" />
-                    <div class="game-wager-shortcuts">
-                      <button data-target="plinko" data-action="min">Min</button>
-                      <button data-target="plinko" data-action="half">½</button>
-                      <button data-target="plinko" data-action="max">Max</button>
-                    </div>
+            <canvas id="plinko-canvas"></canvas>
+
+            <div class="plinko-controls">
+              <div class="game-wager-box">
+                <label class="game-wager-label">Bet Amount</label>
+                <div class="game-wager-row">
+                  <input id="plinko-bet-input" type="number" value="10" min="1" />
+                  <div class="game-wager-shortcuts">
+                    <button data-target="plinko" data-action="min">Min</button>
+                    <button data-target="plinko" data-action="half">½</button>
+                    <button data-target="plinko" data-action="double">2x</button>
+                    <button data-target="plinko" data-action="max">Max</button>
                   </div>
                 </div>
+              </div>
+
+              <div class="plinko-selects">
                 <label>
-                  Rows
+                  Risk
                   <select id="plinko-risk-select"></select>
                 </label>
-                <button id="plinko-drop-btn" class="action-btn primary">Drop Ball</button>
-                <div class="plinko-stats">
-                  <div>Last Multiplier: <span id="plinko-multiplier">--</span></div>
-                  <div>Last Payout: <span id="plinko-payout">$0.00</span></div>
-                </div>
-                <div id="plinko-status" class="status-text"></div>
+                <label>
+                  Rows
+                  <select id="plinko-row-select"></select>
+                </label>
               </div>
-              <canvas id="plinko-canvas"></canvas>
+
+              <div class="plinko-btn-row">
+                <button id="plinko-drop-btn" class="action-btn primary">Drop Ball</button>
+                <button id="plinko-auto-btn" class="action-btn auto">Auto Bet</button>
+              </div>
+
+              <div class="plinko-stats">
+                <div>Last: <span id="plinko-multiplier">--</span></div>
+                <div>Payout: <span id="plinko-payout">$0.00</span></div>
+              </div>
+              <div id="plinko-status" class="status-text"></div>
             </div>
 
             <div class="plinko-sidepanels">
-              <div class="plinko-panel plinko-bigwin-card">
+              <div class="plinko-panel">
                 <div class="plinko-panel-title">Big Win</div>
                 <div id="plinko-bigwin-panel"></div>
               </div>
-              <div class="plinko-panel plinko-history-card">
+              <div class="plinko-panel">
                 <div class="plinko-panel-title">Recent Drops</div>
                 <div id="plinko-history-list" class="plinko-history-list"></div>
               </div>
@@ -123,6 +138,7 @@
           </div>
         </div>
 
+        <!-- ── Profile ────────────────────────────────────── -->
         <div id="profile-tab" class="tab-panel">
           <div class="profile-card">
             <div class="profile-header">

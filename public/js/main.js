@@ -89,13 +89,13 @@ const LavaTransition = (() => {
     const count = 10 + Math.floor(Math.random() * 6);
     for (let i = 0; i < count; i++) {
       const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.5;
-      const len   = 0.55 + Math.random() * 0.5;
       const diag  = Math.sqrt(W()*W() + H()*H()) * 0.5;
+      const len   = 0.55 + Math.random() * 0.5;
       const pts   = [{ x: cx, y: cy }];
-      let   px = cx, py = cy;
+      let px = cx, py = cy;
       const steps = 5 + Math.floor(Math.random() * 5);
       for (let s = 0; s < steps; s++) {
-        const frac = (s + 1) / steps;
+        const frac   = (s + 1) / steps;
         const jitter = (Math.random() - 0.5) * 40 * frac;
         px = cx + Math.cos(angle) * diag * len * frac + Math.cos(angle + Math.PI/2) * jitter;
         py = cy + Math.sin(angle) * diag * len * frac + Math.sin(angle + Math.PI/2) * jitter;
@@ -103,12 +103,11 @@ const LavaTransition = (() => {
         if (Math.random() < 0.45) {
           const bAngle = angle + (Math.random() - 0.5) * 1.2;
           const bLen   = diag * len * (0.2 + Math.random() * 0.25);
-          const bSteps = 3;
           const branch = [{ x: px, y: py }];
           let bx = px, by = py;
-          for (let b = 0; b < bSteps; b++) {
-            bx += Math.cos(bAngle) * bLen / bSteps + (Math.random()-0.5)*20;
-            by += Math.sin(bAngle) * bLen / bSteps + (Math.random()-0.5)*20;
+          for (let b = 0; b < 3; b++) {
+            bx += Math.cos(bAngle) * bLen / 3 + (Math.random()-0.5)*20;
+            by += Math.sin(bAngle) * bLen / 3 + (Math.random()-0.5)*20;
             branch.push({ x: bx, y: by });
           }
           cracks.push({ pts: branch, progress: 0, width: 1 + Math.random(), glow: 0 });
@@ -132,7 +131,7 @@ const LavaTransition = (() => {
   }
 
   function drawDrip(d) {
-    const g = Math.floor(60 + d.heat * 140);
+    const g   = Math.floor(60 + d.heat * 140);
     const col = `rgba(255,${g},0,${d.life})`;
 
     d.trail.forEach((pt, i) => {
@@ -177,7 +176,7 @@ const LavaTransition = (() => {
     ctx.closePath();
 
     const grad = ctx.createLinearGradient(0, topY, 0, H());
-    grad.addColorStop(0,   `rgba(255,${140+Math.floor(Math.sin(t*0.05)*30)},0,0.97)`);
+    grad.addColorStop(0,    `rgba(255,${140+Math.floor(Math.sin(t*0.05)*30)},0,0.97)`);
     grad.addColorStop(0.25, "rgba(255,70,0,0.98)");
     grad.addColorStop(0.6,  "rgba(180,25,0,0.99)");
     grad.addColorStop(1,    "rgba(60,8,0,1)");
@@ -210,25 +209,24 @@ const LavaTransition = (() => {
           allDone = false;
         }
         c.glow = 0.5 + Math.sin(t * 0.12) * 0.3;
-
         const end = Math.floor(c.progress * (c.pts.length - 1));
         if (end < 1) return;
 
-        ctx.shadowBlur = 18;
+        ctx.shadowBlur  = 18;
         ctx.shadowColor = `rgba(255,80,0,${c.glow})`;
         ctx.beginPath();
         ctx.moveTo(c.pts[0].x, c.pts[0].y);
         for (let i = 1; i <= end; i++) ctx.lineTo(c.pts[i].x, c.pts[i].y);
         ctx.strokeStyle = `rgba(255,120,0,${c.glow * 0.8})`;
-        ctx.lineWidth = c.width * 3;
+        ctx.lineWidth   = c.width * 3;
         ctx.stroke();
-        ctx.shadowBlur = 0;
+        ctx.shadowBlur  = 0;
 
         ctx.beginPath();
         ctx.moveTo(c.pts[0].x, c.pts[0].y);
         for (let i = 1; i <= end; i++) ctx.lineTo(c.pts[i].x, c.pts[i].y);
-        ctx.strokeStyle = `rgba(255,200,50,${0.85})`;
-        ctx.lineWidth = c.width;
+        ctx.strokeStyle = "rgba(255,200,50,0.85)";
+        ctx.lineWidth   = c.width;
         ctx.stroke();
 
         if (c.progress > 0.3 && Math.random() < 0.06) {
@@ -240,30 +238,25 @@ const LavaTransition = (() => {
       drips.forEach(d => {
         d.trail.push({ x: d.x, y: d.y });
         if (d.trail.length > 10) d.trail.shift();
-        d.x  += d.vx;
-        d.y  += d.vy;
-        d.vy += 0.15;
+        d.x += d.vx; d.y += d.vy; d.vy += 0.15;
         drawDrip(d);
       });
       drips = drips.filter(d => d.y < H() + 20);
 
-      if (allDone) {
-        phase = "filling";
-        lavaY = H();
-      }
+      if (allDone) { phase = "filling"; lavaY = H(); }
     }
 
     if (phase === "filling") {
       cracks.forEach(c => {
-        ctx.shadowBlur = 14;
-        ctx.shadowColor = `rgba(255,80,0,${0.5 + Math.sin(t*0.1)*0.3})`;
+        ctx.shadowBlur  = 14;
+        ctx.shadowColor = `rgba(255,80,0,${0.5+Math.sin(t*0.1)*0.3})`;
         ctx.beginPath();
         ctx.moveTo(c.pts[0].x, c.pts[0].y);
         c.pts.forEach(p => ctx.lineTo(p.x, p.y));
         ctx.strokeStyle = "rgba(255,160,0,0.7)";
-        ctx.lineWidth = c.width;
+        ctx.lineWidth   = c.width;
         ctx.stroke();
-        ctx.shadowBlur = 0;
+        ctx.shadowBlur  = 0;
       });
 
       lavaY -= 28;
@@ -286,8 +279,8 @@ const LavaTransition = (() => {
       }
 
       if (lavaY <= 0) {
-        phase  = "dropping";
-        dropY  = 0;
+        phase = "dropping";
+        dropY = 0;
         if (onDone) onDone();
       }
     }
@@ -306,7 +299,7 @@ const LavaTransition = (() => {
           ctx.lineTo(x, topY + wave);
         }
         ctx.lineTo(W(), H() + dropY);
-        ctx.lineTo(0, H() + dropY);
+        ctx.lineTo(0,   H() + dropY);
         ctx.closePath();
 
         const grad = ctx.createLinearGradient(0, topY, 0, topY + H());
@@ -324,7 +317,7 @@ const LavaTransition = (() => {
           x === 0 ? ctx.moveTo(x, topY+wave) : ctx.lineTo(x, topY+wave);
         }
         ctx.strokeStyle = `rgba(255,200,50,${0.7+Math.sin(t*0.1)*0.2})`;
-        ctx.lineWidth = 3;
+        ctx.lineWidth   = 3;
         ctx.stroke();
       } else {
         phase = "idle";
@@ -365,21 +358,11 @@ document.addEventListener("DOMContentLoaded", () => {
   playBtn.addEventListener("click", () => {
     landingContent.classList.add("melting");
     LavaAnimation.eruptBurst();
-
     setTimeout(() => {
       LavaTransition.play(() => {
         landingScreen.classList.remove("active");
         lobbyScreen.classList.add("active");
-
-        // Landing screen is now hidden behind the lobby. Give the
-        // lava-drop animation 3 seconds to fully clear, then kill
-        // the ambient volcano canvas loop and remove the landing
-        // screen from the DOM entirely so nothing keeps rendering
-        // behind the scenes.
-        setTimeout(() => {
-          LavaAnimation.destroy();
-          landingScreen.remove();
-        }, 3000);
+        landingContent.classList.remove("melting");
       });
     }, 350);
   });
@@ -388,6 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
     alert("Information page coming soon!");
   });
 
+  // tab switching
   document.querySelectorAll(".tab-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       if (btn.disabled) return;
@@ -395,19 +379,33 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
       btn.classList.add("active");
       document.getElementById(`${btn.dataset.tab}-tab`).classList.add("active");
-    });
-  });
 
-  const betInput = document.getElementById("global-bet-input");
-  document.querySelectorAll(".wager-shortcuts button").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const current = parseFloat(betInput.value) || 0;
-      switch (btn.dataset.action) {
-        case "min":    betInput.value = 1; break;
-        case "half":   betInput.value = (current / 2).toFixed(2); break;
-        case "double": betInput.value = (current * 2).toFixed(2); break;
-        case "max":    betInput.value = BalanceManager.getBalance(); break;
+      // resize plinko canvas when tab becomes visible
+      if (btn.dataset.tab === "plinko") {
+        setTimeout(() => {
+          PlinkoRenderer.resize();
+          PlinkoRenderer.setBoard(
+            parseInt(document.getElementById("plinko-row-select").value),
+            document.getElementById("plinko-risk-select").value
+          );
+        }, 50);
       }
     });
   });
+
+  // wager shortcuts
+  const betInput = document.getElementById("global-bet-input");
+  if (betInput) {
+    document.querySelectorAll(".wager-shortcuts button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const current = parseFloat(betInput.value) || 0;
+        switch (btn.dataset.action) {
+          case "min":    betInput.value = 1; break;
+          case "half":   betInput.value = (current / 2).toFixed(2); break;
+          case "double": betInput.value = (current * 2).toFixed(2); break;
+          case "max":    betInput.value = BalanceManager.getBalance(); break;
+        }
+      });
+    });
+  }
 });

@@ -1,254 +1,277 @@
-// Plinko renderer — draws the lava-themed board: magma rock pegs,
-// glowing multiplier slots, and the ball as it bounces down and
-// progressively melts/glows hotter the further it falls.
-
 const PlinkoRenderer = (() => {
-  let canvas, ctx;
-  let dpr = 1;
-  let width, height;
-  let pegRows = [];
-  let slotPositions = [];
-  let currentRows = 12;
+  let canvas, ctx, dpr;
+  let W, H;
+  let pegRows     = [];
+  let slots       = [];
+  let currentRows = 16;
+  let currentRisk = "high";
   let activeBalls = [];
-  let rafId = null;
+  let litSlots    = {};
+  let rafId;
 
   function init() {
     canvas = document.getElementById("plinko-canvas");
-    ctx = canvas.getContext("2d");
-    dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    ctx    = canvas.getContext("2d");
+    dpr    = Math.min(window.devicePixelRatio || 1, 2);
     resize();
-    window.addEventListener("resize", resize);
+    window.addEventListener("resize", () => { resize(); setBoard(currentRows, currentRisk); });
     loop();
   }
 
   function resize() {
     const rect = canvas.getBoundingClientRect();
-    width = rect.width;
-    height = rect.height;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
+    W = rect.width;
+    H = rect.height;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    if (currentRows) setRows(currentRows);
   }
 
-  function setRows(rows) {
+  function setBoard(rows, risk) {
     currentRows = rows;
-    pegRows = PlinkoPhysics.calculatePegPositions(rows, width, height);
+    currentRisk = risk;
+    pegRows     = PlinkoPhysics.calculatePegPositions(rows, W, H);
+    buildSlots(rows, risk);
+  }
 
-    const slotCount = rows + 1;
-    const slotWidth = width / slotCount;
-    slotPositions = Array.from({ length: slotCount }, (_, i) => ({
-      x: slotWidth * i + slotWidth / 2,
-      width: slotWidth
+  function buildSlots(rows, risk) {
+    const count  = rows + 1;
+    const sw     = W / count;
+    const colors = PlinkoGame.getColorTable(risk, rows);
+    const mults  = PlinkoGame.getMultiplierTable(risk, rows);
+    slots = Array.from({ length: count }, (_, i) => ({
+      x: sw * i, w: sw, cx: sw * i + sw / 2,
+      color: colors[i], mult: mults[i]
     }));
   }
 
-  function drawBoardBackground() {
-    const grad = ctx.createLinearGradient(0, 0, 0, height);
-    grad.addColorStop(0, "#1a0d05");
-    grad.addColorStop(0.6, "#120802");
-    grad.addColorStop(1, "#0a0400");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, width, height);
+  // ── Draw ──────────────────────────────────────────────────
+  function drawBg() {
+    ctx.fillStyle = "#0b0700";
+    ctx.fillRect(0, 0, W, H);
+    const g = ctx.createRadialGradient(W/2, H*0.5, 0, W/2, H*0.5, W*0.7);
+    g.addColorStop(0, "rgba(255,70,0,0.05)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  }
 
-    const glow = ctx.createRadialGradient(
-      width / 2, height, 0,
-      width / 2, height, height * 0.7
-    );
-    glow.addColorStop(0, "rgba(255,90,0,0.18)");
-    glow.addColorStop(1, "rgba(255,90,0,0)");
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, width, height);
+  function getPegRadius() {
+    return Math.max(3, W / (currentRows * 7));
   }
 
   function drawPegs() {
-    const pegRadius = Math.max(3, width / (currentRows * 7));
-
-    pegRows.forEach((row) => {
-      row.forEach((peg) => {
+    const pr = getPegRadius();
+    pegRows.forEach(row => {
+      row.forEach(peg => {
+        // glow
+        const grd = ctx.createRadialGradient(peg.x, peg.y, 0, peg.x, peg.y, pr*3);
+        grd.addColorStop(0, "rgba(255,130,40,0.2)");
+        grd.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = grd;
         ctx.beginPath();
-        ctx.arc(peg.x, peg.y, pegRadius, 0, Math.PI * 2);
-        const rockGrad = ctx.createRadialGradient(
-          peg.x, peg.y, 0, peg.x, peg.y, pegRadius
-        );
-        rockGrad.addColorStop(0, "#3a1c08");
-        rockGrad.addColorStop(1, "#1a0d05");
-        ctx.fillStyle = rockGrad;
+        ctx.arc(peg.x, peg.y, pr*3, 0, Math.PI*2);
         ctx.fill();
 
+        // white peg dot
         ctx.beginPath();
-        ctx.arc(peg.x, peg.y, pegRadius * 0.45, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,110,20,0.85)";
-        ctx.fill();
-
-        const glow = ctx.createRadialGradient(
-          peg.x, peg.y, pegRadius * 0.3, peg.x, peg.y, pegRadius * 2
-        );
-        glow.addColorStop(0, "rgba(255,90,0,0.3)");
-        glow.addColorStop(1, "rgba(255,90,0,0)");
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(peg.x, peg.y, pegRadius * 2, 0, Math.PI * 2);
+        ctx.arc(peg.x, peg.y, pr, 0, Math.PI*2);
+        ctx.fillStyle = "#d0c0a0";
         ctx.fill();
       });
     });
   }
 
-  function drawSlots(highlightSlot = null) {
-    const table = PlinkoGame.getMultiplierTable(currentRows);
-    const slotY = height * 0.92;
-    const slotH = height * 0.07;
+  function drawSlots() {
+    const sy    = H * 0.855;
+    const sh    = H * 0.11;
+    const gap   = 2;
+    const fsize = Math.max(7, Math.min(W / (currentRows * 2.2), 14));
 
-    slotPositions.forEach((slot, i) => {
-      const mult = table[i];
-      const heat = Math.min(mult / 30, 1);
-      const isHighlighted = highlightSlot === i;
+    slots.forEach((slot, i) => {
+      const isLit = litSlots[i] > 0;
 
-      const r = 255;
-      const g = Math.floor(60 + heat * 130);
-      const b = Math.floor(heat * 20);
-
-      ctx.fillStyle = isHighlighted
-        ? `rgba(${r},${Math.min(g + 60, 255)},${b + 40},1)`
-        : `rgba(${r},${g},${b},0.9)`;
-      ctx.fillRect(slot.x - slot.width / 2 + 2, slotY, slot.width - 4, slotH);
-
-      if (isHighlighted) {
-        ctx.save();
-        ctx.shadowColor = "rgba(255,200,80,0.9)";
-        ctx.shadowBlur = 20;
-        ctx.fillRect(slot.x - slot.width / 2 + 2, slotY, slot.width - 4, slotH);
-        ctx.restore();
+      ctx.save();
+      ctx.fillStyle   = slot.color;
+      ctx.globalAlpha = isLit ? 1 : 0.88;
+      if (isLit) {
+        ctx.shadowColor = "#ffffff";
+        ctx.shadowBlur  = 18;
       }
+      ctx.beginPath();
+      ctx.roundRect(slot.x + gap, sy, slot.w - gap*2, sh, 4);
+      ctx.fill();
 
-      ctx.fillStyle = "#1a0d05";
-      ctx.font = `bold ${Math.max(8, slot.width * 0.22)}px sans-serif`;
-      ctx.textAlign = "center";
-      ctx.fillText(`${mult}x`, slot.x, slotY + slotH / 2 + 4);
+      if (isLit) {
+        ctx.fillStyle = "rgba(255,255,255,0.25)";
+        ctx.beginPath();
+        ctx.roundRect(slot.x + gap, sy, slot.w - gap*2, sh, 4);
+        ctx.fill();
+        litSlots[i]--;
+      }
+      ctx.restore();
+
+      ctx.fillStyle    = "#ffffff";
+      ctx.font         = `bold ${fsize}px sans-serif`;
+      ctx.textAlign    = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(`${slot.mult}x`, slot.cx, sy + sh / 2);
     });
   }
 
   function drawBall(ball) {
-    const fallProgress = ball.currentRow / currentRows;
-    const heat = fallProgress;
+    const br   = Math.max(5, W / (currentRows * 5));
+    const heat = Math.min(ball.y / H, 1);
+    const g2   = Math.floor(80 + heat * 160);
 
-    const baseRadius = Math.max(4, width / (currentRows * 5));
-    const meltRadius = baseRadius * (1 + heat * 0.35);
+    // trail
+    ball.trail.forEach((pt, i) => {
+      const a  = (i / ball.trail.length) * 0.5;
+      const tr = br * (i / ball.trail.length) * 0.7;
+      const tg = ctx.createRadialGradient(pt.x, pt.y, 0, pt.x, pt.y, tr*2);
+      tg.addColorStop(0, `rgba(255,${g2},0,${a})`);
+      tg.addColorStop(1, "rgba(255,20,0,0)");
+      ctx.fillStyle = tg;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, tr*2, 0, Math.PI*2);
+      ctx.fill();
+    });
 
-    const r = 255;
-    const g = Math.floor(30 + heat * 180);
-    const b = Math.floor(heat * 100);
-
-    const glow = ctx.createRadialGradient(
-      ball.x, ball.y, 0, ball.x, ball.y, meltRadius * (2 + heat * 1.5)
-    );
-    glow.addColorStop(0, `rgba(${r},${g},${b},${0.5 + heat * 0.3})`);
-    glow.addColorStop(1, "rgba(255,60,0,0)");
-    ctx.fillStyle = glow;
+    // outer glow
+    const og = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, br*3.5);
+    og.addColorStop(0, `rgba(255,${g2},0,${0.4+heat*0.2})`);
+    og.addColorStop(1, "rgba(255,20,0,0)");
+    ctx.fillStyle = og;
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, meltRadius * (2 + heat * 1.5), 0, Math.PI * 2);
+    ctx.arc(ball.x, ball.y, br*3.5, 0, Math.PI*2);
     ctx.fill();
 
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, meltRadius, 0, Math.PI * 2);
-    const bodyGrad = ctx.createRadialGradient(
-      ball.x - meltRadius * 0.3, ball.y - meltRadius * 0.3, 0,
-      ball.x, ball.y, meltRadius
+    // ball body
+    const bg = ctx.createRadialGradient(
+      ball.x - br*0.35, ball.y - br*0.35, 0,
+      ball.x, ball.y, br
     );
-    bodyGrad.addColorStop(0, `rgba(255,${Math.min(g + 80, 255)},${b + 60},1)`);
-    bodyGrad.addColorStop(1, `rgba(${r},${g},${b},1)`);
-    ctx.fillStyle = bodyGrad;
+    bg.addColorStop(0,   `rgba(255,${Math.min(g2+90,255)},90,1)`);
+    bg.addColorStop(0.6, `rgba(255,${g2},0,1)`);
+    bg.addColorStop(1,   "rgba(180,20,0,1)");
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, br, 0, Math.PI*2);
     ctx.fill();
+  }
+
+  // ── Physics loop ──────────────────────────────────────────
+  // Each ball is a real physics object with continuous velocity
+  function physicsStep() {
+    const pr       = getPegRadius();
+    const ballR    = Math.max(5, W / (currentRows * 5));
+    const gravity  = H * 0.0008;   // gravity per frame
+    const bounce   = 0.42;          // energy kept on peg bounce
+    const friction = 0.995;         // horizontal damping
+    const slotY    = H * 0.855;
+
+    activeBalls.forEach(ball => {
+      if (ball.done) return;
+
+      // gravity
+      ball.vy += gravity;
+      ball.vx *= friction;
+      ball.x  += ball.vx;
+      ball.y  += ball.vy;
+
+      // trail
+      ball.trail.push({ x: ball.x, y: ball.y });
+      if (ball.trail.length > 16) ball.trail.shift();
+
+      // wall bounce
+      if (ball.x < ballR)     { ball.x = ballR;     ball.vx =  Math.abs(ball.vx) * 0.5; }
+      if (ball.x > W - ballR) { ball.x = W - ballR; ball.vx = -Math.abs(ball.vx) * 0.5; }
+
+      // peg collision
+      for (let r = 0; r < pegRows.length; r++) {
+        for (let c = 0; c < pegRows[r].length; c++) {
+          const peg  = pegRows[r][c];
+          const dist = Math.hypot(ball.x - peg.x, ball.y - peg.y);
+          const minD = pr + ballR;
+
+          if (dist < minD && dist > 0.01) {
+            // push ball out of peg
+            const nx   = (ball.x - peg.x) / dist;
+            const ny   = (ball.y - peg.y) / dist;
+            const overlap = minD - dist;
+            ball.x += nx * overlap;
+            ball.y += ny * overlap;
+
+            // reflect velocity off peg normal
+            const dot  = ball.vx * nx + ball.vy * ny;
+            ball.vx    = (ball.vx - 2 * dot * nx) * bounce;
+            ball.vy    = (ball.vy - 2 * dot * ny) * bounce;
+
+            // add small random horizontal nudge so ball doesn't get stuck
+            ball.vx   += (Math.random() - 0.5) * H * 0.003;
+
+            // ensure ball always moves downward after bounce
+            if (ball.vy < 0) ball.vy = Math.abs(ball.vy) * 0.3;
+          }
+        }
+      }
+
+      // landed in slot
+      if (ball.y >= slotY && !ball.done) {
+        ball.done = true;
+        ball.y    = slotY;
+
+        // figure out which slot
+        const slotW  = W / (currentRows + 1);
+        const bucket = Math.min(
+          Math.max(Math.floor(ball.x / slotW), 0),
+          currentRows
+        );
+
+        litSlots[bucket] = 45;
+
+        setTimeout(() => {
+          activeBalls = activeBalls.filter(b => b !== ball);
+          if (ball.onLanded) ball.onLanded(bucket);
+        }, 250);
+      }
+    });
   }
 
   function loop() {
-    ctx.clearRect(0, 0, width, height);
-    drawBoardBackground();
+    physicsStep();
+    ctx.clearRect(0, 0, W, H);
+    drawBg();
     drawPegs();
-
-    const highlightSlots = activeBalls.filter(b => b.landed).map(b => b.finalSlot);
-    drawSlots(highlightSlots);
-
+    drawSlots();
     activeBalls.forEach(drawBall);
-
     rafId = requestAnimationFrame(loop);
   }
 
-  function animateDrop(path, finalSlot, onLanded) {
-    const slotWidth = width / (currentRows + 1);
+  // ── Drop a ball with real physics ─────────────────────────
+  function animateDrop(rows, risk, bucket, onLanded) {
+    // Seed vx so ball trends toward the target bucket
+    // but physics determines final resting place
+    const centerX   = W / 2;
+    const slotW     = W / (rows + 1);
+    const targetX   = slotW * bucket + slotW / 2;
+    const nudge     = (targetX - centerX) / W * H * 0.012;
 
-    const ball = {
-      x: width / 2,
-      y: height * 0.04,
-      currentRow: 0,
-      finalSlot: null,
-      landed: false
-    };
-    activeBalls.push(ball);
-
-    let rightCount = 0;
-    let rowIndex = 0;
-
-    function stepToNextRow() {
-      if (rowIndex >= path.length) {
-        const targetX = slotWidth * finalSlot + slotWidth / 2;
-        animateTo(ball, targetX, height * 0.92, 220, () => {
-          ball.landed = true;
-          ball.finalSlot = finalSlot;
-          setTimeout(() => {
-            activeBalls = activeBalls.filter(b => b !== ball);
-            onLanded(finalSlot);
-          }, 260);
-        });
-        return;
-      }
-
-      const goesRight = path[rowIndex];
-      if (goesRight) rightCount++;
-
-      const rowPegs = pegRows[rowIndex];
-      const targetPeg = rowPegs[Math.min(rightCount, rowPegs.length - 1)];
-      const targetY = targetPeg ? targetPeg.y : height * (rowIndex / currentRows);
-      const targetX = targetPeg ? targetPeg.x : ball.x;
-
-      rowIndex++;
-      ball.currentRow = rowIndex;
-
-      animateTo(ball, targetX, targetY, 120, stepToNextRow);
-    }
-
-    stepToNextRow();
-  }
-
-  function animateTo(ball, targetX, targetY, duration, callback) {
-    const startX = ball.x;
-    const startY = ball.y;
-    const startTime = performance.now();
-
-    function frame(now) {
-      const elapsed = now - startTime;
-      const t = Math.min(elapsed / duration, 1);
-      const eased = t * (2 - t);
-
-      ball.x = startX + (targetX - startX) * eased;
-      ball.y = startY + (targetY - startY) * eased;
-
-      if (t < 1) {
-        requestAnimationFrame(frame);
-      } else {
-        ball.x = targetX;
-        ball.y = targetY;
-        callback();
-      }
-    }
-    requestAnimationFrame(frame);
+    activeBalls.push({
+      x:        centerX + (Math.random() - 0.5) * 4,
+      y:        H * 0.02,
+      vx:       nudge + (Math.random() - 0.5) * H * 0.002,
+      vy:       H * 0.002,
+      trail:    [],
+      done:     false,
+      onLanded
+    });
   }
 
   function destroy() {
     if (rafId) cancelAnimationFrame(rafId);
-    window.removeEventListener("resize", resize);
     activeBalls = [];
   }
 
-  return { init, resize, setRows, animateDrop, destroy };
+  return { init, resize, setBoard, animateDrop, destroy };
 })();
