@@ -1,72 +1,54 @@
-// Plinko game — core state and drop logic. Talks to PlinkoPhysics
-// for the actual bounce simulation and exposes results for the
-// renderer/VFX layer to animate.
-
 const PlinkoGame = (() => {
-  const ROW_OPTIONS = [8, 12, 16];
-
-  let state = {
-    rows: 12,
-    betAmount: 10,
-    history: [],       // every result this session: { multiplier, payout, slot }
-    lastBigWin: null   // { multiplier, payout } — only the most recent big win
+  // Multiplier tables indexed by landing bucket (0 = far left edge).
+  // Center buckets pay least (most likely outcome), edges pay most (rarest).
+  const TABLES = {
+    8:  [29, 4, 1.5, 0.3, 0.2, 0.3, 1.5, 4, 29],
+    12: [33, 11, 4, 2, 0.7, 0.2, 0.2, 0.2, 0.7, 2, 4, 11, 33],
+    16: [1000, 130, 26, 9, 4, 2, 0.2, 0.2, 0.2, 0.2, 0.2, 2, 4, 9, 26, 130, 1000]
   };
 
   function getRowOptions() {
-    return ROW_OPTIONS;
+    return Object.keys(TABLES).map(Number);
   }
 
   function getMultiplierTable(rows) {
-    return PlinkoPhysics.getMultiplierTable(rows);
+    return TABLES[rows];
   }
 
-  function getState() {
-    return { ...state, history: [...state.history] };
-  }
-
-  function setRows(rows) {
-    if (!ROW_OPTIONS.includes(rows)) throw new Error("Invalid row count");
-    state.rows = rows;
-  }
-
-  function dropBall(betAmount, forcedSlot = null) {
-    if (!betAmount || betAmount <= 0) {
-      throw new Error("Enter a valid bet amount");
+  // Simulates the ball bouncing left/right at each peg row.
+  // Returns the full path (for animation) plus the resulting bucket/multiplier/payout.
+  function simulateDrop(rows) {
+    const path = [];
+    let bucket = 0;
+    for (let i = 0; i < rows; i++) {
+      const goRight = Math.random() < 0.5 ? 0 : 1;
+      path.push(goRight);
+      bucket += goRight;
     }
+    return { path, bucket };
+  }
 
-    const table = PlinkoPhysics.getMultiplierTable(state.rows);
-    const sim = forcedSlot !== null
-      ? PlinkoPhysics.simulateForcedDrop(state.rows, forcedSlot)
-      : PlinkoPhysics.simulateDrop(state.rows);
+  async function drop({ rows, betAmount }) {
+    if (!TABLES[rows]) throw new Error("Invalid row count");
+    if (!betAmount || betAmount <= 0) throw new Error("Enter a valid bet amount");
+    if (betAmount > BalanceManager.getBalance()) throw new Error("Insufficient balance!");
 
-    const multiplier = table[sim.finalSlot];
+    BalanceManager.deduct(betAmount);
+
+    const { path, bucket } = simulateDrop(rows);
+    const multiplier = TABLES[rows][bucket];
     const payout = parseFloat((betAmount * multiplier).toFixed(2));
 
-    const result = {
-      path: sim.path,
-      slot: sim.finalSlot,
-      multiplier,
-      payout,
-      betAmount,
-      isTopSlot: sim.finalSlot === 0 || sim.finalSlot === table.length - 1,
-      isMaxMultiplier: multiplier === Math.max(...table)
-    };
+    if (payout > 0) BalanceManager.add(payout);
 
-    state.history.unshift({ multiplier, payout, slot: sim.finalSlot });
-    if (state.history.length > 50) state.history.pop();
-
-    if (result.isTopSlot) {
-      state.lastBigWin = { multiplier, payout };
+    if (multiplier >= 1) {
+      BalanceManager.recordWin(payout, betAmount);
+    } else {
+      BalanceManager.recordLoss(betAmount - payout);
     }
 
-    return result;
+    return { rows, path, bucket, multiplier, payout, betAmount };
   }
 
-  return {
-    getRowOptions,
-    getMultiplierTable,
-    getState,
-    setRows,
-    dropBall
-  };
+  return { getRowOptions, getMultiplierTable, drop };
 })();

@@ -166,10 +166,8 @@ const PlinkoRenderer = (() => {
     drawBoardBackground();
     drawPegs();
 
-    const highlightSlot = activeBalls.length > 0 && activeBalls[0].landed
-      ? activeBalls[0].finalSlot
-      : null;
-    drawSlots(highlightSlot);
+    const highlightSlots = activeBalls.filter(b => b.landed).map(b => b.finalSlot);
+    drawSlots(highlightSlots);
 
     activeBalls.forEach(drawBall);
 
@@ -186,7 +184,7 @@ const PlinkoRenderer = (() => {
       finalSlot: null,
       landed: false
     };
-    activeBalls = [ball];
+    activeBalls.push(ball);
 
     let rightCount = 0;
     let rowIndex = 0;
@@ -198,7 +196,7 @@ const PlinkoRenderer = (() => {
           ball.landed = true;
           ball.finalSlot = finalSlot;
           setTimeout(() => {
-            activeBalls = [];
+            activeBalls = activeBalls.filter(b => b !== ball);
             onLanded(finalSlot);
           }, 260);
         });
@@ -252,5 +250,5 @@ const PlinkoRenderer = (() => {
     activeBalls = [];
   }
 
-  return { init, setRows, animateDrop, destroy };
+  return { init, resize, setRows, animateDrop, destroy };
 })();
