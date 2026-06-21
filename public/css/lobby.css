@@ -1,0 +1,58 @@
+#lobby-screen {
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.lobby-header h2 {
+  font-size: 2rem;
+  color: #ffb380;
+}
+
+.lobby-game-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  max-width: 700px;
+  width: 100%;
+}
+
+.lobby-game-card {
+  padding: 1.5rem 1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: 2px solid #ff6b1a;
+  border-radius: 10px;
+  background: rgba(255, 107, 26, 0.08);
+  color: #ffb380;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lobby-game-card:hover:not(:disabled) {
+  background: #ff6b1a;
+  color: #1a0500;
+  transform: scale(1.05);
+}
+
+.lobby-game-card:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.back-to-lobby-btn {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 107, 26, 0.15);
+  border: 1px solid #ff6b1a;
+  border-radius: 6px;
+  color: #ffb380;
+  cursor: pointer;
+  z-index: 10;
+}

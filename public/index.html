@@ -6,6 +6,8 @@
   <title>Beef Gambling</title>
   <link rel="stylesheet" href="css/global.css" />
   <link rel="stylesheet" href="css/landing.css" />
+  <link rel="stylesheet" href="css/lobby.css" />
+  <link rel="stylesheet" href="css/components/mines.css" />
 </head>
 <body>
 
@@ -23,10 +25,53 @@
   </div>
 
   <div id="lobby-screen" class="screen">
-    <h2>Lobby coming soon</h2>
+    <div class="lobby-header">
+      <h2>Choose a Game</h2>
+    </div>
+    <div class="lobby-game-list">
+      <button class="lobby-game-card" data-game="mines">Mines</button>
+      <button class="lobby-game-card" data-game="plinko" disabled>Plinko (soon)</button>
+      <button class="lobby-game-card" data-game="dice" disabled>Dice (soon)</button>
+      <button class="lobby-game-card" data-game="plane" disabled>Plane (soon)</button>
+      <button class="lobby-game-card" data-game="crash" disabled>Crash (soon)</button>
+    </div>
+  </div>
+
+  <div id="mines-screen" class="screen">
+    <button class="back-to-lobby-btn" data-target="mines">← Back</button>
+
+    <div class="mines-layout">
+      <div class="mines-controls">
+        <label>
+          Grid Size
+          <select id="mines-grid-select"></select>
+        </label>
+        <label>
+          Mines
+          <select id="mines-mine-select"></select>
+        </label>
+        <label>
+          Bet Amount
+          <input id="mines-bet-input" type="number" value="10" min="1" />
+        </label>
+        <button id="mines-start-btn" class="mines-action-btn">Start Game</button>
+        <button id="mines-cashout-btn" class="mines-action-btn cashout">Cash Out</button>
+
+        <div class="mines-stats">
+          <div>Multiplier: <span id="mines-multiplier">1.00x</span></div>
+          <div>Payout: <span id="mines-payout">$0.00</span></div>
+        </div>
+        <div id="mines-status" class="mines-status-text"></div>
+      </div>
+
+      <div id="mines-grid" class="mines-grid"></div>
+    </div>
   </div>
 
   <script src="js/landingAnimation.js"></script>
+  <script src="js/games/mines/minesGame.js"></script>
+  <script src="js/games/mines/minesRenderer.js"></script>
+  <script src="js/games/mines/minesUI.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
